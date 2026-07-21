@@ -1,0 +1,8 @@
+# Disable the module file-watcher: it eagerly walks torch/transformers
+# submodules and triggers unrelated optional imports (zoedepth -> torchvision).
+[server]
+fileWatcherType = "none"
+headless = true
+
+[browser]
+gatherUsageStats = false

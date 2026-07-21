@@ -1,0 +1,14 @@
+sentence-transformers>=3.0
+scikit-learn>=1.4
+fastapi>=0.110
+streamlit>=1.35
+pandas>=2.2
+numpy>=1.26
+pytest>=8.0
+datasets>=2.19
+requests>=2.31
+python-dotenv>=1.0
+matplotlib>=3.8
+openai>=1.30
+torchvision>=0.18
+

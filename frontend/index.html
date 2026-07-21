@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ShadowTrace — Live Trajectory Monitor</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <!-- ===================== SIDEBAR ===================== -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">🛰️</div>
+        <div>
+          <div class="brand-name">ShadowTrace</div>
+          <div class="brand-sub">trajectory divergence monitor</div>
+        </div>
+      </div>
+
+      <div class="seg" id="modeSeg">
+        <button class="seg-btn active" data-mode="sample">Sample</button>
+        <button class="seg-btn" data-mode="custom">Paste your own</button>
+      </div>
+
+      <!-- sample controls -->
+      <div id="samplePanel">
+        <label class="field">
+          <span>Category</span>
+          <select id="category"></select>
+        </label>
+        <label class="field">
+          <span>Trajectory</span>
+          <select id="trajectory"></select>
+        </label>
+        <button class="ghost-btn" id="surprise">🎲 Random flagged example</button>
+      </div>
+
+      <!-- custom controls -->
+      <div id="customPanel" hidden>
+        <label class="field">
+          <span>User task / intent</span>
+          <textarea id="customIntent" rows="3" placeholder="Read the config file and tell me the timeout value."></textarea>
+        </label>
+        <label class="field">
+          <span>Steps (JSON list)</span>
+          <textarea id="customSteps" rows="7" placeholder='[{"action":"cat","params":{"file":"config.yaml"},"result":"timeout: 30"}]'></textarea>
+        </label>
+        <div class="hint" id="customErr"></div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="tune">
+        <div class="tune-title">Verdict thresholds</div>
+        <label class="slider">
+          <span>Cumulative drift trigger <b id="driftOut">0.62</b></span>
+          <input type="range" id="driftHigh" min="0.30" max="0.90" step="0.01" value="0.62" />
+        </label>
+        <label class="slider">
+          <span>Delta spike trigger <b id="deltaOut">0.55</b></span>
+          <input type="range" id="deltaSpike" min="0.30" max="0.90" step="0.01" value="0.55" />
+        </label>
+        <label class="slider">
+          <span>Playback speed <b id="delayOut">0.35s</b></span>
+          <input type="range" id="delay" min="0" max="1.5" step="0.05" value="0.35" />
+        </label>
+      </div>
+
+      <div class="run-row">
+        <button class="run-btn" id="run">▶ Run live monitor</button>
+        <button class="stop-btn" id="stop" hidden>■ Stop</button>
+      </div>
+
+      <div class="theme-toggle">
+        <button id="themeBtn">🌗 Theme</button>
+      </div>
+    </aside>
+
+    <!-- ===================== MAIN ===================== -->
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <h1>Live trajectory monitor</h1>
+          <p class="tagline">Watch the backend judge an agent's actions step by step, in real time.</p>
+        </div>
+        <div class="status-pill" id="statusPill"><i class="dot"></i><span id="statusText">idle</span></div>
+      </header>
+
+      <!-- intent card -->
+      <section class="card intent-card">
+        <div class="intent-top">
+          <span class="chip" id="gtChip">no trajectory</span>
+          <span class="chip subtle" id="metaChip"></span>
+        </div>
+        <p class="intent-text" id="intent">Pick a sample or paste your own, then press <b>Run live monitor</b>.</p>
+      </section>
+
+      <!-- hero row: verdict + metrics -->
+      <section class="hero">
+        <div class="card verdict-card benign" id="verdictCard">
+          <div class="verdict-label">verdict</div>
+          <div class="verdict-big" id="verdictBig">—</div>
+          <div class="verdict-foot" id="verdictFoot">waiting</div>
+        </div>
+        <div class="metric-grid">
+          <div class="card metric">
+            <div class="metric-top"><span>Step</span><i>⛓</i></div>
+            <div class="metric-val" id="mStep">0<small>/0</small></div>
+          </div>
+          <div class="card metric">
+            <div class="metric-top"><span>Cumulative drift</span><i style="color:var(--drift)">◆</i></div>
+            <div class="metric-val" id="mDrift">0.000</div>
+            <div class="spark" id="sparkDrift"></div>
+          </div>
+          <div class="card metric">
+            <div class="metric-top"><span>Δ step delta</span><i style="color:var(--delta)">▲</i></div>
+            <div class="metric-val" id="mDelta">0.000</div>
+            <div class="spark" id="sparkDelta"></div>
+          </div>
+          <div class="card metric">
+            <div class="metric-top"><span>LLM calls saved</span><i>💸</i></div>
+            <div class="metric-val" id="mSaved">0<small>/0</small></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- chart -->
+      <section class="card chart-card">
+        <div class="card-head">
+          <h2>Divergence over time</h2>
+          <div class="legend">
+            <span><i class="sw drift"></i>cumulative drift</span>
+            <span><i class="sw delta"></i>step-to-step delta</span>
+            <span><i class="sw thr"></i>trigger levels</span>
+          </div>
+        </div>
+        <canvas id="chart" width="1200" height="380"></canvas>
+      </section>
+
+      <!-- step timeline -->
+      <section class="card log-card">
+        <div class="card-head">
+          <h2>Step-by-step log</h2>
+          <span class="hint" id="logHint">click a row for full detail</span>
+        </div>
+        <div class="log-scroll">
+          <table id="log">
+            <thead>
+              <tr><th>#</th><th>action</th><th>drift</th><th>Δ delta</th><th>verdict</th><th>reason</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <p class="disclaimer">
+        Verdict is a provisional tunable heuristic (not yet calibrated) — see README §6.
+        Delta is the active research signal. Data: TraceSafe-Bench (arXiv:2604.07223).
+      </p>
+    </main>
+  </div>
+
+  <!-- step detail drawer -->
+  <div class="drawer" id="drawer" hidden>
+    <div class="drawer-body">
+      <div class="drawer-head">
+        <span id="drawerTitle">Step detail</span>
+        <button id="drawerClose">✕</button>
+      </div>
+      <div id="drawerContent"></div>
+    </div>
+  </div>
+
+  <script src="chart.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

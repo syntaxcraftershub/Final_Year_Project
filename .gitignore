@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+# Downloaded + derived data. Both are regenerable:
+#   1. download golden_*.jsonl from github.com/yenshan0530/TraceSafe -> database/raw/tracesafe/
+#   2. python source/data_parser.py                                  -> database/processed/
+# database/processed/ also contains the benchmark's SYNTHETIC credential strings
+# (ghp_/AKIA format), which trip GitHub push protection. Keep it out of git.
+database/raw/
+database/processed/
+*.egg-info/
+.pytest_cache/
+*.original.md

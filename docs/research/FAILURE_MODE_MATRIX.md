@@ -1,0 +1,32 @@
+# Failure Mode Matrix
+
+Falsifiable claims, not "our system solves everything." Each row: a documented
+failure mode from a competitor's own paper (see `COMPETITOR_ANALYSIS.md` for
+verification status), whether ShadowTrace is exposed to it, and what would
+falsify a claim of robustness. Status is honest about what is tested in this
+pass vs scoped out.
+
+| Failure mode | Evidence / source | Competitor affected | ShadowTrace exposure | Experiment | Metric | Falsification condition | Status |
+|---|---|---|---|---|---|---|---|
+| File/object reuse blind spot | SLEIGHT-Bench: 15% catch rate | Claude Opus 4.6 as monitor | Untested — Tier 0/1 have no object-identity tracking, Tier 2 relies on prompt reasoning only | Would require a SLEIGHT-Bench-style stress suite (not built) | Recall on reuse-type transcripts | Recall << overall recall would falsify "robust" claim | **Not tested — scoped out, disclosed** |
+| Counting / quantity blind spot | SLEIGHT-Bench: 13% catch rate | Claude Opus 4.6 as monitor | Untested — no explicit counting logic anywhere in the cascade | Same as above | Recall on counting-type transcripts | Same pattern | **Not tested — scoped out, disclosed** |
+| System-state tracking | SLEIGHT-Bench: 46% catch rate | Claude Opus 4.6 as monitor | Partially exposed — `step_to_sentence` renders each step independently; no persistent state ledger across steps | Same as above | Recall on state-tracking transcripts | Same pattern | **Not tested — scoped out, disclosed** |
+| Authorization confusion | SLEIGHT-Bench: 55% catch rate | Claude Opus 4.6 as monitor | Untested directly, but TraceSafe's `PRIVACY_LEAKAGE` category (`ApiKeyLeak`, `UserInfoLeak`) is adjacent | E1/E2 per-category AUC on `PRIVACY_LEAKAGE` is the closest available proxy, NOT a direct test | Category AUC | Low `PRIVACY_LEAKAGE` AUC is suggestive, not conclusive proof of this specific blind spot | **Proxy only via E1/E2, not a direct test** |
+| Multi-hop / N-hop reasoning | SLEIGHT-Bench: 0% catch rate in at least one variant reported | Claude Opus 4.6 as monitor | Exposed — Tier 0/1 score per-step or worst-step; no explicit multi-hop reasoning chain | Not built | — | — | **Not tested — scoped out, disclosed** |
+| Monitor-aware / adaptive attacks (vs naturally-elicited) | MonitoringBench: catch rate 94.9% → 60.3% under refined attacks | General LLM monitors | Fully exposed — TraceSafe's mutations are fixed and pre-generated, not adaptively red-teamed against ShadowTrace | Not built (would need an adaptive red-team loop) | — | — | **Not tested — scoped out, disclosed. Measured detection rate should be read as an upper bound relative to a determined attacker.** |
+| Monitor collusion (same model family judging its own agent's outputs) | TraceGuard: 0% safety under collusion for a conventional single-score monitor, 95% for their structured approach | Conventional single-LLM-judge monitors | Untested — Tier 2 (Qwen2.5-1.5B-Instruct)'s relationship to TraceSafe's trace-generation models (`toolace-8b`, `gpt-5-mini`, `mistral-14b`, `qwen`, `gemini-3-flash-preview`, `gpt-4o-mini`) is not controlled for. Qwen2.5-1.5B and the "qwen" trace-generation model are a different size/checkpoint but same lab lineage — a real, disclosed confound. | Not built (would need a cross-model-family judge comparison) | — | — | **Not tested — scoped out, disclosed confound** |
+| Low-FPR operating point ("80% detection can require >20% FPR") | SHADE-Arena | General trajectory monitors | Directly relevant — ShadowTrace's `metrics.py` already reports detection rate and FPR as **separate** numbers rather than one blended accuracy, specifically because of this class of finding | E3/E4 (cascade vs baselines on the frozen calibration bands) | detection_rate, false_positive_rate reported together, never accuracy alone | A future extension (not built here) would report recall at fixed FPR thresholds (e.g. 1%, 5%) rather than only the single calibrated operating point | **Partially addressed by design** (separate DR/FPR reporting); **recall-at-fixed-FPR curve not built** |
+| Cross-step evidence connection (isolated suspicious steps not linked into a trajectory-level attack) | SHADE-Arena, TRACE | General monitors; addressed by TRACE's evidence retention | Exposed — ShadowTrace's tiers score steps independently and aggregate via first-flag-wins / worst-step, not via carried evidence | Not built | — | — | **Not tested — scoped out, disclosed architectural gap** |
+| Dataset-specific overfitting (does the cascade learn TraceSafe artifacts rather than general drift signal?) | Implicit in ATBench's existence as a distinct benchmark | All TraceSafe-only evaluations, including this one | Fully exposed — ShadowTrace calibrates AND tests entirely within TraceSafe | Would require adapting the loader to ATBench and running a strict zero-retuning external evaluation | Detection rate / FPR on ATBench using TraceSafe-frozen thresholds | A large drop from TraceSafe-test to ATBench performance would indicate overfitting to TraceSafe-specific artifacts | **Not tested — scoped out, disclosed as the single highest-value follow-up** |
+| Structural-competence confound (detection driven by JSON-parsing competence, not safety understanding) | TraceSafe's own finding: ρ=0.79 with structured-to-text benchmarks, ~0 with jailbreak robustness | All guardrails evaluated in the TraceSafe paper | Partially mitigated — `step_to_sentence` renders tool calls as plain English specifically to reduce this confound, but not verified to eliminate it | Not directly tested; would require an ablation comparing raw-JSON input vs `step_to_sentence`-rendered input to the same tiers | Detection rate/AUC delta between raw-JSON and rendered input | Large AUC gain from rendering alone (vs semantic content) would suggest the confound persists | **Partially mitigated by design, not directly measured** |
+
+## What this table is and is not
+
+This is a disclosure mechanism, not a compliance checklist ShadowTrace claims
+to satisfy. Every "not tested" row is a real, acknowledged limitation of the
+version of ShadowTrace built in this pass — carried into
+`docs/research/limitations.md` and the paper's Limitations section verbatim,
+not softened. Building out even a subset of these (external ATBench
+validation is the highest-value one) is future work explicitly flagged for a
+follow-up iteration, contingent on time remaining after the core approved
+cascade (Phases 2–13 of the mission brief) is complete, tested, and reported.

@@ -21,6 +21,7 @@ Run:
 import asyncio
 import json
 import sys
+import time
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Query, Request
@@ -36,6 +37,7 @@ from pipeline import Thresholds, monitor  # noqa: E402
 
 DATA = ROOT / "database" / "processed" / "tracesafe.jsonl"
 FRONTEND = ROOT / "frontend"
+FEEDBACK_LOG = ROOT / "result" / "feedback.jsonl"
 
 CATEGORY_LABELS = {
     "BENIGN": "Benign",
@@ -209,6 +211,50 @@ async def stream_custom(req: Request):
         _run_stream(intent, steps, cfg, delay, meta),
         media_type="text/event-stream",
     )
+
+
+@app.post("/api/feedback")
+async def feedback(req: Request):
+    """Log a usefulness rating for a completed run.
+
+    Body: {task_id, verdict, ground_truth, useful: bool, comment?: str}
+    This is a lightweight in-app survey widget, not a research metric --
+    it is human feedback on whether a shown verdict felt useful/correct,
+    logged for later qualitative review. It does NOT feed back into
+    calibration or any reported experiment number.
+    """
+    body = await req.json()
+    useful = body.get("useful")
+    if useful not in (True, False):
+        raise HTTPException(400, "'useful' must be true or false")
+    entry = {
+        "timestamp": time.time(),
+        "task_id": str(body.get("task_id", "")),
+        "verdict": body.get("verdict"),
+        "ground_truth": body.get("ground_truth"),
+        "useful": useful,
+        "comment": str(body.get("comment", ""))[:1000],
+    }
+    FEEDBACK_LOG.parent.mkdir(parents=True, exist_ok=True)
+    with open(FEEDBACK_LOG, "a", encoding="utf-8") as f:
+        f.write(json.dumps(entry) + "\n")
+    return {"ok": True}
+
+
+@app.get("/api/feedback/summary")
+def feedback_summary():
+    """Aggregate counts for the feedback survey (dashboard-visible, not a paper metric)."""
+    if not FEEDBACK_LOG.exists():
+        return {"n": 0, "useful": 0, "not_useful": 0}
+    n = useful = 0
+    for line in open(FEEDBACK_LOG, encoding="utf-8"):
+        try:
+            entry = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        n += 1
+        useful += bool(entry.get("useful"))
+    return {"n": n, "useful": useful, "not_useful": n - useful}
 
 
 # Static frontend (mounted last so /api/* wins).

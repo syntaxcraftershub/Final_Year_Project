@@ -154,6 +154,21 @@
         </div>
       </section>
 
+      <!-- feedback survey widget: appears once a run finishes -->
+      <section class="card feedback-card" id="feedbackCard" hidden>
+        <div class="card-head">
+          <h2>Was this verdict useful?</h2>
+          <span class="hint" id="feedbackHint"></span>
+        </div>
+        <div class="feedback-row">
+          <button class="fb-btn fb-yes" id="fbYes">👍 Useful</button>
+          <button class="fb-btn fb-no" id="fbNo">👎 Not useful</button>
+          <input type="text" id="fbComment" placeholder="Optional comment (why?)" />
+          <button class="fb-submit" id="fbSubmit" hidden>Send</button>
+        </div>
+        <div class="hint" id="fbSent"></div>
+      </section>
+
       <p class="disclaimer">
         Verdict is a provisional tunable heuristic (not yet calibrated) — see README §6.
         Delta is the active research signal. Data: TraceSafe-Bench (arXiv:2604.07223).

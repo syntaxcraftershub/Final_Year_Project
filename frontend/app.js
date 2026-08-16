@@ -11,6 +11,9 @@ let controller = null;      // AbortController for the active stream
 let steps = [];             // steps of the current run (for the drawer)
 const driftHist = [];
 const deltaHist = [];
+let currentMeta = null;     // meta payload of the run currently in progress
+let lastSummary = null;     // summary payload of the most recently completed run
+let fbChoice = null;        // pending true/false pick, before "Send"
 
 const VERDICT = {
   benign:  { big: "BENIGN",  foot: "on-task",              cls: "benign" },
@@ -162,6 +165,10 @@ async function run() {
   try {
     await streamSSE(url, opts, (ev, d) => {
       if (ev === "meta") {
+        currentMeta = d;
+        $("feedbackCard").hidden = true;
+        $("fbSent").textContent = "";
+        $("fbComment").value = "";
         nSteps = d.n_steps;
         const gt = d.label;
         const chip = $("gtChip");
@@ -203,6 +210,10 @@ async function run() {
         const gt = d.ground_truth ? ` · truth ${d.ground_truth}` : "";
         const mark = d.correct === true ? " ✓ correct" : d.correct === false ? " ✗ wrong" : "";
         setStatus(`done · ${d.final_verdict.toUpperCase()}${gt}${mark} · peak Δ ${d.peak_delta}`, "done");
+        lastSummary = d;
+        $("feedbackCard").hidden = false;
+        $("fbYes").classList.remove("picked"); $("fbNo").classList.remove("picked");
+        $("fbSubmit").hidden = true;
       }
     });
   } catch (e) {
@@ -227,6 +238,41 @@ function openDrawer(d) {
 function row(k, v) { return `<div class="d-row"><div class="k">${k}</div><div class="v">${v}</div></div>`; }
 $("drawerClose").addEventListener("click", () => ($("drawer").hidden = true));
 $("drawer").addEventListener("click", (e) => { if (e.target.id === "drawer") $("drawer").hidden = true; });
+
+/* ---------- feedback survey widget ----------
+   Lightweight "was this verdict useful?" rating, logged server-side to
+   result/feedback.jsonl. This is human feedback for qualitative review, not
+   a research metric -- it never feeds calibration or any reported number. */
+function pickFeedback(useful) {
+  fbChoice = useful;
+  $("fbYes").classList.toggle("picked", useful === true);
+  $("fbNo").classList.toggle("picked", useful === false);
+  $("fbSubmit").hidden = false;
+}
+$("fbYes").addEventListener("click", () => pickFeedback(true));
+$("fbNo").addEventListener("click", () => pickFeedback(false));
+$("fbSubmit").addEventListener("click", async () => {
+  if (fbChoice === null || !currentMeta) return;
+  $("fbSubmit").disabled = true;
+  try {
+    await fetch("/api/feedback", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        task_id: currentMeta.task_id,
+        verdict: lastSummary ? lastSummary.final_verdict : null,
+        ground_truth: currentMeta.label || null,
+        useful: fbChoice,
+        comment: $("fbComment").value.slice(0, 1000),
+      }),
+    });
+    $("fbSent").textContent = "Thanks — feedback recorded.";
+  } catch (e) {
+    $("fbSent").textContent = "Couldn't send feedback (backend unreachable).";
+  } finally {
+    $("fbSubmit").disabled = false;
+  }
+});
 
 /* ---------- wire ---------- */
 $("run").addEventListener("click", run);

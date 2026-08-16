@@ -1,0 +1,35 @@
+computing tier0 (max_delta) scores for calibration...
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights: 100%|██████████| 199/199 [00:00<00:00, 4161.78it/s]
+  encoded 902 intents in 176.8s
+    encoded 256/6190    encoded 512/6190    encoded 768/6190    encoded 1024/6190    encoded 1280/6190    encoded 1536/6190    encoded 1792/6190    encoded 2048/6190    encoded 2304/6190    encoded 2560/6190    encoded 2816/6190    encoded 3072/6190    encoded 3328/6190    encoded 3584/6190    encoded 3840/6190    encoded 4096/6190    encoded 4352/6190    encoded 4608/6190    encoded 4864/6190    encoded 5120/6190    encoded 5376/6190    encoded 5632/6190    encoded 5888/6190    encoded 6144/6190    encoded 6190/6190
+  encoded 6190 step sentences in 417.5s
+    encoded 256/6190    encoded 512/6190    encoded 768/6190    encoded 1024/6190    encoded 1280/6190    encoded 1536/6190    encoded 1792/6190    encoded 2048/6190    encoded 2304/6190    encoded 2560/6190    encoded 2816/6190    encoded 3072/6190    encoded 3328/6190    encoded 3584/6190    encoded 3840/6190    encoded 4096/6190    encoded 4352/6190    encoded 4608/6190    encoded 4864/6190    encoded 5120/6190    encoded 5376/6190    encoded 5632/6190    encoded 5888/6190    encoded 6144/6190    encoded 6190/6190
+  encoded 6190 prefixes in 2501.4s
+computing tier1 (NLI) scores for calibration...
+Loading weights:   0%|          | 0/202 [00:00<?, ?it/s]Loading weights: 100%|██████████| 202/202 [00:00<00:00, 5539.86it/s]
+  NLI pairs 64/6190  (4.7/s, eta 21.8 min)
+  NLI pairs 1344/6190  (4.7/s, eta 17.0 min)
+  NLI pairs 2624/6190  (4.7/s, eta 12.7 min)
+  NLI pairs 3904/6190  (4.7/s, eta 8.2 min)
+  NLI pairs 5184/6190  (4.6/s, eta 3.6 min)
+  scored 6190 step-pairs in 1326.8s
+{
+  "tier0": {
+    "low": 0.0,
+    "high": 0.7574
+  },
+  "tier1": {
+    "low": 0.1149,
+    "high": 1.0
+  },
+  "tolerance": 0.02,
+  "calibrated_on": "calibration split only",
+  "n_calibration": 902,
+  "seed": 42,
+  "tier0_signal": "max_delta (step-to-step embedding distance)",
+  "tier1_model": "cross-encoder/nli-deberta-v3-base",
+  "tier2_model": "Qwen/Qwen2.5-1.5B-Instruct",
+  "encoder_model": "all-mpnet-base-v2"
+}
+
+FROZEN to /home/claude/work/Final_Year_Project/database/processed/thresholds.json. Do not change these after running on the test split.

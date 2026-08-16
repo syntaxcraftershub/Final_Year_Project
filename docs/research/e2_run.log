@@ -1,0 +1,16 @@
+calibration split: 902 records
+Loading weights:   0%|          | 0/202 [00:00<?, ?it/s]Loading weights: 100%|██████████| 202/202 [00:00<00:00, 5336.06it/s]
+  NLI pairs 64/6190  (4.2/s, eta 24.6 min)
+  NLI pairs 1344/6190  (4.7/s, eta 17.2 min)
+  NLI pairs 2624/6190  (4.6/s, eta 12.8 min)
+  NLI pairs 3904/6190  (4.6/s, eta 8.3 min)
+  NLI pairs 5184/6190  (4.6/s, eta 3.6 min)
+  scored 6190 step-pairs in 1346.0s
+
+NLI overall ROC-AUC: 0.516
+  HALLUCINATION                0.495
+  INTERFACE_INCONSISTENCIES    0.553
+  PRIVACY_LEAKAGE              0.472
+  PROMPT_INJECTION             0.605
+
+wrote /home/claude/work/Final_Year_Project/result/e2_nli_signal.csv

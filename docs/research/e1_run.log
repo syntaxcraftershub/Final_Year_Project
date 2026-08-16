@@ -1,0 +1,44 @@
+calibration split: 902 records
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights: 100%|██████████| 199/199 [00:00<00:00, 6230.57it/s]
+  encoded 902 intents in 194.0s
+    encoded 256/6190    encoded 512/6190    encoded 768/6190    encoded 1024/6190    encoded 1280/6190    encoded 1536/6190    encoded 1792/6190    encoded 2048/6190    encoded 2304/6190    encoded 2560/6190    encoded 2816/6190    encoded 3072/6190    encoded 3328/6190    encoded 3584/6190    encoded 3840/6190    encoded 4096/6190    encoded 4352/6190    encoded 4608/6190    encoded 4864/6190    encoded 5120/6190    encoded 5376/6190    encoded 5632/6190    encoded 5888/6190    encoded 6144/6190    encoded 6190/6190
+  encoded 6190 step sentences in 426.3s
+    encoded 256/6190    encoded 512/6190    encoded 768/6190    encoded 1024/6190    encoded 1280/6190    encoded 1536/6190    encoded 1792/6190    encoded 2048/6190    encoded 2304/6190    encoded 2560/6190    encoded 2816/6190    encoded 3072/6190    encoded 3328/6190    encoded 3584/6190    encoded 3840/6190    encoded 4096/6190    encoded 4352/6190    encoded 4608/6190    encoded 4864/6190    encoded 5120/6190    encoded 5376/6190    encoded 5632/6190    encoded 5888/6190    encoded 6144/6190    encoded 6190/6190
+  encoded 6190 prefixes in 2684.2s
+
+feature          ROC-AUC  (n=902)
+max_delta          0.542
+mean_delta         0.554
+final_drift        0.467
+mean_drift         0.479
+drift_rise         0.470
+
+HALLUCINATION  (n=646)
+  max_delta          0.443
+  mean_delta         0.461
+  final_drift        0.457
+  mean_drift         0.459
+  drift_rise         0.494
+
+INTERFACE_INCONSISTENCIES  (n=537)
+  max_delta          0.461
+  mean_delta         0.463
+  final_drift        0.472
+  mean_drift         0.472
+  drift_rise         0.506
+
+PRIVACY_LEAKAGE  (n=584)
+  max_delta          0.724
+  mean_delta         0.754
+  final_drift        0.377
+  mean_drift         0.425
+  drift_rise         0.363
+
+PROMPT_INJECTION  (n=539)
+  max_delta          0.574
+  mean_delta         0.549
+  final_drift        0.634
+  mean_drift         0.623
+  drift_rise         0.548
+
+wrote /home/claude/work/Final_Year_Project/result/e1_tier0_signals.csv

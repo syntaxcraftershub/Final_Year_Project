@@ -22,6 +22,23 @@ NOT precomputed: it is invoked lazily, on demand, exactly when a
 configuration's cascade actually reaches it -- this is deliberate, because
 per_step_llm forcing Tier2 on every trajectory (and its resulting latency) IS
 the measurement this experiment exists to produce.
+
+TEST-SPLIT SUBSAMPLE, decided BEFORE this run and based on a measured cost,
+not on any result: Tier 2 (Qwen2.5-1.5B-Instruct, CPU) was directly timed at
+this stage at ~7-8s/call steady-state. The full test split is 1,348 records.
+per_step_llm forces Tier 2 on every one of them by definition (~3 hours
+alone); full_cascade's frozen calibration bands (tier0 low=0.0, tier1
+high=1.0 -- see database/processed/thresholds.json, itself a consequence of
+E1/E2's weak measured signal) mean most test records are also expected to
+escalate to Tier 2, potentially doubling that. That is not tractable in this
+environment (2 CPU cores, no GPU). TEST_SUBSAMPLE_N below fixes a smaller,
+pair-grouped (twins kept together, matching the split's own leakage-safety
+rule), seed-42 random subsample of the test split, applied IDENTICALLY to
+every configuration in this script so the comparison between configs stays
+apples-to-apples. This is a disclosed compute constraint, not a data
+selection tuned to produce a particular outcome -- the subsample is drawn
+before any config is evaluated, from pair_id alone, blind to labels beyond
+preserving benign/malicious pair structure.
 """
 
 import csv
@@ -44,6 +61,19 @@ from e2_nli_signal import batched_nli_scores  # noqa: E402
 
 THRESHOLDS = Path(__file__).resolve().parent.parent / "database" / "processed" / "thresholds.json"
 OUT = Path(__file__).resolve().parent / "e3_e4_results.csv"
+
+TEST_SUBSAMPLE_N = 300   # pairs (not records) -- see module docstring
+SUBSAMPLE_SEED = 42
+
+
+def subsample_by_pair(records, n_pairs, seed=SUBSAMPLE_SEED):
+    import random
+    pair_ids = sorted({r["pair_id"] for r in records})
+    if n_pairs >= len(pair_ids):
+        return records
+    rng = random.Random(seed)
+    chosen = set(rng.sample(pair_ids, n_pairs))
+    return [r for r in records if r["pair_id"] in chosen]
 
 
 class PrecomputedTier:
@@ -145,7 +175,11 @@ def evaluate(name, cascade, records):
 def main():
     th = json.loads(THRESHOLDS.read_text(encoding="utf-8"))
     records = load_records(split="test")
-    print(f"TEST split: {len(records)} trajectories. This is the single scored run.\n")
+    full_n = len(records)
+    records = subsample_by_pair(records, TEST_SUBSAMPLE_N)
+    print(f"TEST split: {full_n} trajectories total; using a fixed seed-{SUBSAMPLE_SEED} "
+          f"subsample of {TEST_SUBSAMPLE_N} pairs ({len(records)} trajectories) for Tier-2 "
+          f"wall-clock tractability (see module docstring). This is the single scored run.\n")
 
     print("precomputing tier0 (max_delta) scores for the whole test split...")
     t0_rows = batched_features(records)

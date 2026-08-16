@@ -60,6 +60,20 @@ MODEL_NAME = "cross-encoder/nli-deberta-v3-base"
 CONTRADICTION_IDX = 0
 ENTAILMENT_IDX = 1
 
+# PERFORMANCE SETTING, fixed before any calibration/evaluation run (not tuned
+# against results): DeBERTa-v3's disentangled attention makes this checkpoint
+# slow at its default max_seq_length=512 on CPU (measured: 64 pairs in ~100s
+# at length 512, i.e. <0.65 pairs/s -- would make the full-corpus experiments
+# take many hours on this 2-core host). Measured (task + rendered step
+# sentence) token length on 100 calibration-split trajectories: mean 167,
+# p95 381, max 891 tokens. Capping at 128 tokens cuts runtime ~5x (measured
+# 64 pairs in ~18s, 3.6 pairs/s) at the cost of truncating the tail of long
+# tool-call results -- applied uniformly to every record regardless of label,
+# so it does not introduce a label-correlated bias, only a uniform loss of
+# some tail context on the longest trajectories. Disclosed as a measurement
+# limitation in docs/research/limitations.md, not silently applied.
+MAX_SEQ_LENGTH = 128
+
 _model = None
 
 
@@ -67,6 +81,7 @@ def _get_model():
     global _model
     if _model is None:
         _model = CrossEncoder(MODEL_NAME)
+        _model.max_seq_length = MAX_SEQ_LENGTH
     return _model
 
 

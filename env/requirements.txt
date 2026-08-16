@@ -12,3 +12,8 @@ matplotlib>=3.8
 openai>=1.30
 torchvision>=0.18
 
+protobuf>=4.25
+sentencepiece>=0.2
+torch>=2.2
+transformers>=4.42
+accelerate>=0.30

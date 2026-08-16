@@ -77,5 +77,7 @@ def test_processed_file_valid():
         assert rec["label"] in ("benign", "malicious")
         labels.add(rec["label"])
         n += 1
-    assert n == 1170
+    # The corpus legitimately grew once benign twins were added (Phase 2):
+    # every malicious record now also emits its unmutated benign twin.
+    assert n > 2000
     assert labels == {"benign", "malicious"}

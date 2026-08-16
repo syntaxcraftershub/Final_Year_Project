@@ -62,8 +62,19 @@ from e2_nli_signal import batched_nli_scores  # noqa: E402
 THRESHOLDS = Path(__file__).resolve().parent.parent / "database" / "processed" / "thresholds.json"
 OUT = Path(__file__).resolve().parent / "e3_e4_results.csv"
 
-TEST_SUBSAMPLE_N = 300   # pairs (not records) -- see module docstring
+TEST_SUBSAMPLE_N = 100   # pairs (not records) -- see module docstring
 SUBSAMPLE_SEED = 42
+# REVISED DOWN from an initial 300: a live run showed real per-call Tier2
+# latency on actual test trajectories (avg ~7 steps, longer prompts) running
+# at ~31s/call steady state, not the ~7-8s/call measured on a 2-step toy
+# probe -- ~4.8h projected for the full 300-pair run given near-total
+# escalation (both tier0/tier1 bands sit at an extreme per E1/E2's weak
+# measured signal). This revision happened AFTER seeing escalation counts
+# (~90%+ of records reaching tier2) but BEFORE seeing any config's aggregate
+# detection/FPR/paired-score number -- no run had produced a scored summary
+# for full_cascade or per_step_llm yet when this was revised, so it is a
+# compute-tractability correction, not a result-driven one. Disclosed here
+# rather than silently shrinking the number.
 
 
 def subsample_by_pair(records, n_pairs, seed=SUBSAMPLE_SEED):

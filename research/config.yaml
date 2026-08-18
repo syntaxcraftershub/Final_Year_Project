@@ -1,0 +1,33 @@
+project: ShadowTrace
+version: "0.1-research"
+seed: 42
+
+models:
+  embedding: all-mpnet-base-v2
+  nli: cross-encoder/nli-MiniLM2-L6-H768
+  llm: qwen3:4b-q4_K_M
+  inference: ollama
+  ollama_url: http://localhost:11434/api/chat
+
+cascade:
+  tier0_low: 0.35
+  tier0_high: 0.65
+  nli_low: 0.35
+  nli_high: 0.65
+  enable_llm: true
+
+# These are provisional until result/calibrate.py freezes them using ONLY
+# the calibration split. Never tune on the final test split.
+evaluation:
+  train_fraction: 0.70
+  calibration_fraction: 0.15
+  test_fraction: 0.15
+  primary_metrics:
+    - roc_auc
+    - average_precision
+    - f1
+    - precision
+    - recall
+    - false_positive_rate
+    - llm_calls_per_trajectory
+    - median_latency_ms

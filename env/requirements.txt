@@ -1,5 +1,4 @@
 sentence-transformers>=3.0
-cross-encoder>=1.0
 scikit-learn>=1.4
 fastapi>=0.110
 uvicorn>=0.30

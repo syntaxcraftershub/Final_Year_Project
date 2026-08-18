@@ -1,0 +1,92 @@
+\documentclass[conference]{IEEEtran}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{url}
+\usepackage{hyperref}
+
+\title{ShadowTrace: A Cost-Aware Cascade Framework for Detecting Multi-Step Intent Divergence in AI Agent Trajectories}
+
+\author{\IEEEauthorblockN{Devesh K. R.}
+\IEEEauthorblockA{Division of Data Science and Cyber Security\\
+Karunya Institute of Technology and Sciences\\
+Coimbatore, India}}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Autonomous AI agents can execute multi-step workflows in which unsafe behavior is distributed across individually plausible actions. Monitoring every action with a large language model can provide rich semantic judgment but introduces substantial inference cost and latency. ShadowTrace proposes a three-tier trajectory-monitoring cascade that combines inexpensive embedding signals, local natural-language-inference scoring, and selective local large-language-model adjudication. The first tier computes cumulative semantic drift and consecutive-step delta; ambiguous cases are passed to a local NLI model that estimates task-action contradiction; residual ambiguous trajectories are escalated to a locally hosted Qwen model through Ollama. The evaluation protocol uses grouped train/calibration/test splits, matched-pair protection where authoritative pair identifiers exist, category-level reporting, and explicit compute-efficiency metrics. Final numerical claims are generated only by version-controlled experiment scripts.
+\end{abstract}
+
+\begin{IEEEkeywords}
+AI agents, agent safety, trajectory monitoring, intent divergence, natural language inference, local LLM, selective inference.
+\end{IEEEkeywords}
+
+\section{Introduction}
+AI agents increasingly combine language reasoning with external tools and multi-step execution. A safety monitor that evaluates isolated actions can miss a gradual change in intent. Conversely, sending every action to a large language model increases inference cost. ShadowTrace studies whether a selective cascade can reserve expensive semantic reasoning for cases that cheaper signals cannot resolve.
+
+\section{Research Gap}
+Semantic similarity can capture shared topic rather than alignment with the user's actual goal. The proposed system therefore treats cumulative embedding drift as a baseline, evaluates step-to-step delta, introduces NLI goal/action contradiction, and reserves a local LLM for the residual gray zone.
+
+\section{Method}
+Let $T$ be the user task and $A=\{a_1,\ldots,a_n\}$ the agent trajectory. For normalized embeddings, prefix drift is
+\begin{equation}
+D_i = 1-\cos(v_T,v_{1:i}),
+\end{equation}
+and consecutive-step delta is
+\begin{equation}
+\Delta_i = 1-\cos(v_{i-1},v_i).
+\end{equation}
+Tier 0 resolves clearly low or high scores. Tier 1 estimates $P(\text{contradiction}\mid T,a_i)$ with a local NLI cross-encoder. Tier 2 sends the trajectory prefix to a local Qwen model served through Ollama when Tier 1 remains ambiguous.
+
+\section{Experimental Protocol}
+Thresholds are tuned only on a calibration split and frozen before testing. Mutation/original pairs are kept together whenever an authoritative pair identifier exists. The primary metrics are ROC-AUC, Average Precision, precision, recall, F1, false-positive rate, LLM calls per trajectory, median latency, and p95 latency.
+
+\subsection{Baselines}
+Majority class, cumulative drift, delta, Tier-0-only, Tier-1-only, full LLM per action, full LLM per trajectory, and the complete ShadowTrace cascade.
+
+\section{Results}
+This section must be populated only from \texttt{result/metrics/cascade\_summary.json}. No manually invented values are permitted.
+
+\begin{table}[t]
+\centering
+\caption{Detection and efficiency comparison. Populate from reproducible experiments.}
+\label{tab:main}
+\begin{tabular}{lcccccc}
+\toprule
+Method & AUC & F1 & FPR & Prec. & Recall & LLM/traj\\
+\midrule
+Majority & -- & -- & -- & -- & -- & 0\\
+Cumulative drift & -- & -- & -- & -- & -- & 0\\
+Delta & -- & -- & -- & -- & -- & 0\\
+Tier 0 & -- & -- & -- & -- & -- & 0\\
+Tier 1 & -- & -- & -- & -- & -- & 0\\
+Full LLM & -- & -- & -- & -- & -- & --\\
+ShadowTrace & -- & -- & -- & -- & -- & --\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Ablation and Error Analysis}
+Evaluate cumulative drift versus delta, remove NLI, remove Tier 2, vary thresholds, and analyze model-size/quantization sensitivity. Report false positives and false negatives by trajectory category.
+
+\section{Limitations}
+The benchmark may mix genuine intent divergence with operational failures. The selected local model is constrained by reproducible execution on modest hardware. Thresholds may require recalibration for new environments. External validity requires additional datasets and agent environments.
+
+\section{Reproducibility}
+The repository records the experiment protocol, split generation, configuration, model tags, prompt, seed, and output metrics. The exact git commit used for final tables must be recorded before submission.
+
+\section{Conclusion}
+ShadowTrace frames trajectory monitoring as selective inference: cheap signals are used whenever possible and expensive semantic adjudication is reserved for uncertainty. The contribution will be supported by measured detection-efficiency trade-offs and controlled ablations.
+
+\section*{Acknowledgment}
+Add supervisor/institutional acknowledgment only after authorship and acknowledgment roles are confirmed.
+
+\begin{thebibliography}{00}
+\bibitem{tracesafe} Add the verified primary TraceSafe benchmark citation.
+\bibitem{nli} Add the verified primary NLI/model citation.
+\bibitem{ollama} Add the verified primary Ollama citation if required by the target venue.
+\end{thebibliography}
+
+\end{document}
